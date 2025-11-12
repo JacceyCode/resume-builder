@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class AuthResponse {
-    @JsonProperty("_id")
+//    @JsonProperty("_id")
     private String id;
     private String name;
     private String email;

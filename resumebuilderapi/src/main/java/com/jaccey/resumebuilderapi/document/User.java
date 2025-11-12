@@ -22,7 +22,7 @@ public class User {
     private String password;
     private String profileImageUrl;
     private String subscriptionPlan = "basic";
-    private Boolean emailVerified;
+    private Boolean isEmailVerified;
     private String verificationToken;
     private LocalDateTime verificationExpires;
 
