@@ -83,4 +83,18 @@ public class AuthService {
                 .verificationExpires(LocalDateTime.now().plusHours(24))
                 .build();
     }
+
+    public void verifyEmail(String token) {
+        User user = userRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid or expired verification token"));
+
+        if(user.getVerificationExpires() != null && user.getVerificationExpires().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Invalid or expired verification token. Please request a new token.");
+        }
+
+        user.setIsEmailVerified(true);
+        user.setVerificationToken(null);
+        user.setVerificationExpires(null);
+        userRepository.save(user);
+    }
 }
