@@ -1,13 +1,17 @@
 package com.jaccey.resumebuilderapi.controller;
 
 import com.jaccey.resumebuilderapi.dto.AuthResponse;
+import com.jaccey.resumebuilderapi.dto.LoginRequest;
 import com.jaccey.resumebuilderapi.dto.RegisterRequest;
 import com.jaccey.resumebuilderapi.service.AuthService;
 import com.jaccey.resumebuilderapi.service.FileUploadService;
+import com.jaccey.resumebuilderapi.util.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +28,7 @@ import static com.jaccey.resumebuilderapi.util.AppConstants.*;
 public class AuthController {
     private final AuthService authService;
     private final FileUploadService fileUploadService;
+    private final JwtUtil jwtUtil;
 
     @PostMapping(REGISTER)
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
@@ -46,5 +51,20 @@ public class AuthController {
         Map<String, String> response = fileUploadService.uploadSingleImage(file);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        AuthResponse response = authService.login(request);
+
+        // Get Cookie
+        ResponseCookie cookie = jwtUtil.generateCookie(response.getToken());
+
+        return ResponseEntity.status(HttpStatus.OK).header(HttpHeaders.SET_COOKIE, cookie.toString()).body(response);
+    }
+
+    @GetMapping("/validate")
+    public ResponseEntity<?> validateAuth() {
+        return ResponseEntity.status(HttpStatus.OK).body("Token validated");
     }
 }

@@ -2,16 +2,20 @@ package com.jaccey.resumebuilderapi.service;
 
 import com.jaccey.resumebuilderapi.document.User;
 import com.jaccey.resumebuilderapi.dto.AuthResponse;
+import com.jaccey.resumebuilderapi.dto.LoginRequest;
 import com.jaccey.resumebuilderapi.dto.RegisterRequest;
 import com.jaccey.resumebuilderapi.exception.ResourceExistsException;
 import com.jaccey.resumebuilderapi.repository.UserRepository;
+import com.jaccey.resumebuilderapi.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -21,6 +25,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Value("${app.base.url}")
     private String appBaseUrl;
@@ -98,5 +103,29 @@ public class AuthService {
         user.setVerificationToken(null);
         user.setVerificationExpires(null);
         userRepository.save(user);
+    }
+
+    public AuthResponse login(LoginRequest request) {
+        // Get user
+        User existingUser = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("Invalid email or password"));
+
+        // Verify password
+        if(!passwordEncoder.matches(request.getPassword(), existingUser.getPassword())) {
+            throw new UsernameNotFoundException("Invalid email or password");
+        }
+
+        // Check Email Verification
+        if(!existingUser.getIsEmailVerified()) {
+            throw new RuntimeException("Please verify your email before login.");
+        }
+
+        // Generate token
+        String token = jwtUtil.generateToken(existingUser.getId());
+
+        AuthResponse response = toResponse(existingUser);
+        response.setToken(token);
+
+        return response;
     }
 }
