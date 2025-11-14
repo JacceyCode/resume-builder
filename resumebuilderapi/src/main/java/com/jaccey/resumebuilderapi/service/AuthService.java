@@ -8,6 +8,7 @@ import com.jaccey.resumebuilderapi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.util.UUID;
 public class AuthService {
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${app.base.url}")
     private String appBaseUrl;
@@ -43,7 +45,7 @@ public class AuthService {
         try {
             String link = appBaseUrl+"/api/auth/verify-email?token="+newUser.getVerificationToken();
             String html = "<div style='font-family:sans-serif'>" +
-                    "<h1>Application Resume Builder</h1>" +
+                    "<h1 style='text-align:center;'>Application Resume Builder</h1>" +
                     "<h2>Verify your email</h2>" +
                     "<p>Hi " + newUser.getName() + ", please confirm your email to activate your account</p>" +
                     "<p><a href='" + link + "' style='display:inline-block;padding:10px 16px;background:#6366f1;color:#fff;border-radius:6px;text-decoration:none'>Verify Email</a></p>" +
@@ -75,7 +77,7 @@ public class AuthService {
         return User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
-                .password(request.getPassword())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .profileImageUrl(request.getProfileImageUrl())
                 .subscriptionPlan("Basic")
                 .isEmailVerified(false)
