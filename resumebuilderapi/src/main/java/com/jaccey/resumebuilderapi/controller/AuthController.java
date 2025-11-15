@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.jaccey.resumebuilderapi.util.AppConstants.*;
 
@@ -53,7 +54,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @PostMapping("/login")
+    @PostMapping(LOGIN)
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
 
@@ -63,8 +64,16 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).header(HttpHeaders.SET_COOKIE, cookie.toString()).body(response);
     }
 
-    @GetMapping("/validate")
-    public ResponseEntity<?> validateAuth() {
-        return ResponseEntity.status(HttpStatus.OK).body("Token validated");
+    @PostMapping(RESEND_VERIFICATION)
+    public ResponseEntity<?> resendVerification(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+
+        if(Objects.isNull(email)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
+        }
+
+        authService.resendVerification(email);
+
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true, "message", "Verification email sent"));
     }
 }
